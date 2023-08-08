@@ -1,35 +1,33 @@
-#!/usr/bin/env python3
+from Xlib import X, display
 
-import Xlib
-import Xlib.display
-import Xlib.X
-
-from Xlib import X
-
-class SimpleWindow:
-    def __init__(self):
-        self.display = Xlib.display.Display()
+class Window:
+    def __init__(self, display, msg):
+        self.display = display
+        self.msg = msg
+        
         self.screen = self.display.screen()
-        self.root = self.screen.root
-        self.window = self.root.create_window(
-            100, 100, 400, 300, 1,
-            X.CopyFromParent, X.InputOutput, X.CopyFromParent,
-            event_mask=X.ExposureMask
-        )
-        self.window.change_attributes(back_pixel=self.screen.black_pixel)
-        self.window.set_wm_name("Simple Window")
+        self.window = self.screen.root.create_window(
+            10, 10, 100, 100, 1,
+            self.screen.root_depth,
+            background_pixel=self.screen.white_pixel,
+            event_mask=X.ExposureMask | X.KeyPressMask,
+            )
+        self.gc = self.window.create_gc(
+            foreground = self.screen.black_pixel,
+            background = self.screen.white_pixel,
+            )
 
-    def run(self):
         self.window.map()
+
+    def loop(self):
         while True:
-            event = self.display.next_event()
-            if event.type == X.Expose:
-                self.handle_expose(event)
+            e = self.display.next_event()
+                
+            if e.type == X.Expose:
+                self.window.fill_rectangle(self.gc, 20, 20, 10, 10)
+            elif e.type == X.KeyPress:
+                raise SystemExit
 
-    def handle_expose(self, event):
-        self.window.clear_area(event.x, event.y, event.width, event.height, 0)
-
+                
 if __name__ == "__main__":
-    window = SimpleWindow()
-    window.run()
-
+    Window(display.Display(), "Hello, World!").loop()
